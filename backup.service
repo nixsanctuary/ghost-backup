@@ -1,0 +1,15 @@
+# /etc/systemd/system/backup.service
+[Unit]
+Description=Backup service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'TIME=$(/usr/bin/date +%%Y%%m%%d-%%H%%m); \
+/usr/bin/docker save -o /tmp/ghost.tar ghost; \
+/usr/bin/zstd --ultra -22 /tmp/ghost.tar -o /tmp/ghost-$TIME.tar.zstd; \
+/usr/bin/rclone -v --progress --config /root/.config/rclone/rclone.conf  copy /tmp/ghost-$TIME.tar.zstd>
+/usr/bin/rclone --config /root/.config/rclone/rclone.conf delete --min-age 70d storj:nsbackup/; \
+rm -rf /tmp/ghost*;'
+
+[Install]
+WantedBy=multi-user.target
